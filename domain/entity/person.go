@@ -23,7 +23,7 @@ type PersonParams struct {
 
 func NewPerson(params PersonParams) (person *Person, err error) {
 	person = &Person{
-		ID:        uuid.New(),
+		ID:        params.ID,
 		Nickname:  params.Nickname,
 		Name:      params.Name,
 		Birthdate: params.Birthdate,

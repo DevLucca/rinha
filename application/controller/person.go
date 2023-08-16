@@ -19,8 +19,26 @@ func NewPersonController(svc *service.PersonService) *PersonController {
 	}
 }
 
-func (c *PersonController) Get(ctx *gin.Context) {
+func (c *PersonController) Search(ctx *gin.Context) {
+	t := ctx.Query("t")
 
+	if t == "" {
+		ctx.JSON(400, nil)
+		return
+	}
+
+	people, err := c.svc.Search(ctx, t)
+	if err != nil {
+		ctx.JSON(404, nil)
+		return
+	}
+
+	if len(people) == 0 {
+		ctx.JSON(200, []any{})
+		return
+	}
+
+	ctx.JSON(200, people)
 }
 
 func (c *PersonController) Count(ctx *gin.Context) {
@@ -63,7 +81,8 @@ func (c *PersonController) Create(ctx *gin.Context) {
 
 	id, err := c.svc.Create(ctx, dto)
 	if err != nil {
-		ctx.JSON(422, gin.H{"error": err})
+		fmt.Println(err)
+		ctx.JSON(422, gin.H{"error": err.Error()})
 		return
 	}
 

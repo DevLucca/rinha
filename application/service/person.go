@@ -25,24 +25,34 @@ func NewPersonService(cache cache.Cache, domainSvc *service.PersonService) *Pers
 }
 
 func (svc *PersonService) Create(ctx context.Context, dto dto.PersonRequestDTO) (id uuid.UUID, err error) {
+	if exists := svc.cache.Exists(fmt.Sprintf("nickname:%s", dto.Nickname)); exists {
+		return id, fmt.Errorf("person already exists")
+	}
+
 	params := entity.PersonParams{
+		ID:        uuid.New(),
 		Name:      dto.Name,
 		Nickname:  dto.Nickname,
 		Birthdate: dto.Birthdate,
 		Stack:     dto.Stack,
 	}
 
-	id, err = svc.domainSvc.Save(ctx, params)
-	if err != nil {
-		return id, err
-	}
+	go func() {
+		err = svc.domainSvc.Save(ctx, params)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		svc.cache.Increase("person-count")
+		svc.cache.SetInt(fmt.Sprintf("nickname:%s", params.Nickname), 1)
+	}()
 
-	params.ID = id
-	jsonBytes, _ := json.Marshal(params)
+	go func() {
+		jsonBytes, _ := json.Marshal(params)
+		svc.cache.SetItem(fmt.Sprintf("person:%s", id.String()), jsonBytes)
+	}()
 
-	svc.cache.SetItem(fmt.Sprintf("person:%s", id.String()), jsonBytes)
-	svc.cache.Increase("person-count")
-	return id, nil
+	return params.ID, nil
 }
 
 func (svc *PersonService) Retrieve(ctx context.Context, id uuid.UUID) (person *entity.Person, err error) {
@@ -61,6 +71,23 @@ func (svc *PersonService) Retrieve(ctx context.Context, id uuid.UUID) (person *e
 
 	json.Unmarshal(jsonBytes, &person)
 	return person, nil
+}
+
+func (svc *PersonService) Search(ctx context.Context, query string) (people []*entity.Person, err error) {
+	peopleIDs, err := svc.domainSvc.Search(ctx, query)
+	if err != nil {
+		return people, err
+	}
+
+	for _, id := range peopleIDs {
+		person, err := svc.Retrieve(ctx, id)
+		if err != nil {
+			return people, err
+		}
+		people = append(people, person)
+	}
+
+	return people, nil
 }
 
 func (svc *PersonService) Count(ctx context.Context) int {

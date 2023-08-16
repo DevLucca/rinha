@@ -15,7 +15,7 @@ type (
 		InMemory bool `mapstructure:"in-memory"`
 
 		Host string `mapstructure:"host"`
-		Port uint16 `mapstructure:"port"`
+		Port string `mapstructure:"port"`
 		Name string `mapstructure:"name"`
 		User string `mapstructure:"user"`
 		Pass string `mapstructure:"pass"`

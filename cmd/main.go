@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/DevLucca/rinha/application/controller"
 	applicationService "github.com/DevLucca/rinha/application/service"
 	"github.com/DevLucca/rinha/domain/repository"
@@ -9,14 +11,15 @@ import (
 	"github.com/DevLucca/rinha/infra/http"
 	"github.com/DevLucca/rinha/infra/persistence/cache"
 	"github.com/DevLucca/rinha/infra/persistence/cache/redis"
-	"github.com/DevLucca/rinha/infra/persistence/database/inmemory"
+	"github.com/DevLucca/rinha/infra/persistence/database/mysql"
 	"go.uber.org/fx"
 )
 
 func main() {
 	fx.New(
-		// Infra Deps
 		fx.Provide(
+			// Infra Deps
+			context.Background,
 			// *config.Config
 			config.Read,
 
@@ -32,9 +35,13 @@ func main() {
 				return client
 			},
 
+			// Persistence Database
+			mysql.NewMySQLClient,
+
 			// Repository
 			fx.Annotate(
-				inmemory.NewInMemoryPersonRepository,
+				// inmemory.NewInMemoryPersonRepository,
+				mysql.NewMySQLPeopleRepository,
 				fx.As(new(repository.Person)),
 			),
 		),

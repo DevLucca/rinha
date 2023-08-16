@@ -13,5 +13,7 @@ type Cache interface {
 	SetString(key string, data string) error
 	GetString(key string) (string, error)
 	GetInt(key string) (int64, error)
+	SetInt(key string, data int64) error
 	Increase(key string) error
+	Exists(key string) bool
 }

@@ -102,6 +102,15 @@ func (c *Client) GetInt(key string) (int64, error) {
 	return strconv.ParseInt(string(val), 10, 64)
 }
 
+func (c *Client) SetInt(key string, data int64) error {
+	err := c.redis.Set(c.buildKey(key), data, 0).Err()
+	if err != nil {
+		return fmt.Errorf("error cache set int: %w", err)
+	}
+
+	return nil
+}
+
 func (c *Client) Increase(key string) error {
 	err := c.redis.Incr(c.buildKey(key)).Err()
 	if err != nil && err == redis.Nil {
@@ -111,4 +120,15 @@ func (c *Client) Increase(key string) error {
 	}
 
 	return nil
+}
+
+func (c *Client) Exists(key string) bool {
+	_, err := c.GetItem(key)
+	if err == cache.ErrCacheMiss {
+		return false
+	} else if err != nil {
+		return false
+	}
+
+	return true
 }
