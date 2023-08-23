@@ -18,7 +18,6 @@ type MySQLClient struct {
 
 func NewMySQLClient(ctx context.Context, cfg *config.Config) (dbClient *MySQLClient, err error) {
 	dsn := buildDBConnectionURI(cfg)
-	fmt.Println(dsn)
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -34,5 +33,5 @@ func NewMySQLClient(ctx context.Context, cfg *config.Config) (dbClient *MySQLCli
 }
 
 func buildDBConnectionURI(cfg *config.Config) string {
-	return fmt.Sprintf("%s:%s@/%s", cfg.Db.User, cfg.Db.Pass, cfg.Db.Name)
+	return fmt.Sprintf("%s:%s@(%s:%s)/%s", cfg.Db.User, cfg.Db.Pass, cfg.Db.Host, cfg.Db.Port, cfg.Db.Name)
 }
